@@ -22,3 +22,6 @@ libs/http    ─┴─ every service
 
 Try it: change `libs/money` and only orders, payments and catalog
 receive the revision; change a README and nothing does.
+
+Each service pipeline lives under the dispatch pipeline on PipeMesh:
+`/github.com/pipemesh/demo-bazel/-/pipeline/<service>`.
