@@ -7,6 +7,8 @@ jobs:
   build:
     stage: build
     script: |
+      # Bazel's Java launcher needs a C++ toolchain; the hosted image has none.
+      command -v gcc >/dev/null || dnf install -y -q gcc gcc-c++
       tools/bazelw test //services/$SERVICE/...
       tools/bazelw build //services/$SERVICE:server_deploy.jar
       mkdir -p dist && cp bazel-bin/services/$SERVICE/server_deploy.jar dist/$SERVICE.jar

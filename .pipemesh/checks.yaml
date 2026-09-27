@@ -5,6 +5,8 @@ jobs:
   affected_tests:
     stage: test
     script: |
+      # Bazel's Java launcher needs a C++ toolchain; the hosted image has none.
+      command -v gcc >/dev/null || dnf install -y -q gcc gcc-c++
       base=$(git merge-base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" HEAD)
       services=$(tools/affected.sh "$base" HEAD)
       if [ -z "$services" ]; then echo "no service affected"; exit 0; fi
