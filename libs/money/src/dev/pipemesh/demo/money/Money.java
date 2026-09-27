@@ -1,6 +1,6 @@
 package dev.pipemesh.demo.money;
 
-/** Amounts in minor units, one currency per value. */
+/** Amounts in minor units (cents), one currency per value. */
 public record Money(long cents, String currency) {
     public Money plus(Money other) {
         if (!currency.equals(other.currency)) throw new IllegalArgumentException("currency mismatch");
