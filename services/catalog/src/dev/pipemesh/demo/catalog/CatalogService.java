@@ -6,7 +6,7 @@ public final class CatalogService {
     private CatalogService() {}
 
     public static String describe() {
-        return "{\"items\":43,\"from\":\"" + new dev.pipemesh.demo.money.Money(999, "EUR") + "\"}";
+        return "{\"items\":44,\"from\":\"" + new dev.pipemesh.demo.money.Money(999, "EUR") + "\"}";
     }
 
     public static void main(String[] args) throws Exception {
