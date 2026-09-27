@@ -17,6 +17,7 @@ public final class Server {
                     .getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.getResponseHeaders().add("X-Service", service);
+            exchange.getResponseHeaders().add("X-Service", service);
             exchange.sendResponseHeaders(200, bytes.length);
             exchange.getResponseBody().write(bytes);
             exchange.close();
