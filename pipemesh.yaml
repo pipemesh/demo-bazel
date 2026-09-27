@@ -1,0 +1,58 @@
+# A Bazel monorepo on PipeMesh: one dispatch pipeline fans each revision
+# out to a pipeline per service, and a service's pipeline receives the
+# revision only when the Bazel graph says the change can affect it.
+#
+# How: tools/gen-rules.sh turns each deployable's dependency closure
+# into the path list in .pipemesh/affected.yaml, and each dispatch job
+# gates on it with `changes:`. PipeMesh diffs against the revision that
+# job last dispatched, so a service that sat out ten commits still sees
+# all ten when the next one touches it.
+
+graph: !include .pipemesh/affected.yaml
+service: !include .pipemesh/service.yaml
+
+dispatch:
+  stages: [verify, dispatch]
+  jobs:
+    # A stale graph would under-dispatch silently, so it stops the
+    # revision before anything is dispatched.
+    graph_is_current:
+      stage: verify
+      script: tools/gen-rules.sh --check
+
+    orders:
+      stage: dispatch
+      rules: [{ changes: !ref graph.orders }]
+      delegate:
+        type: pipeline
+        params: { body: !ref service, variables: { SERVICE: orders } }
+    payments:
+      stage: dispatch
+      rules: [{ changes: !ref graph.payments }]
+      delegate:
+        type: pipeline
+        params: { body: !ref service, variables: { SERVICE: payments } }
+    inventory:
+      stage: dispatch
+      rules: [{ changes: !ref graph.inventory }]
+      delegate:
+        type: pipeline
+        params: { body: !ref service, variables: { SERVICE: inventory } }
+    notifications:
+      stage: dispatch
+      rules: [{ changes: !ref graph.notifications }]
+      delegate:
+        type: pipeline
+        params: { body: !ref service, variables: { SERVICE: notifications } }
+    catalog:
+      stage: dispatch
+      rules: [{ changes: !ref graph.catalog }]
+      delegate:
+        type: pipeline
+        params: { body: !ref service, variables: { SERVICE: catalog } }
+
+pipemesh:
+  pipelines:
+    pipeline: !ref dispatch
+  workflows:
+    checks: { body: !include .pipemesh/checks.yaml, on: pull_request }

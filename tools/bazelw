@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Runs bazel through bazelisk, fetching bazelisk once per machine.
+# .bazelversion pins the Bazel release.
+set -euo pipefail
+if command -v bazelisk >/dev/null; then exec bazelisk "$@"; fi
+if command -v bazel >/dev/null; then exec bazel "$@"; fi
+os=$(uname -s | tr '[:upper:]' '[:lower:]')
+arch=$(uname -m); case "$arch" in x86_64) arch=amd64 ;; aarch64) arch=arm64 ;; esac
+bin="${XDG_CACHE_HOME:-$HOME/.cache}/bazelisk-1.27.0-$os-$arch"
+if [ ! -x "$bin" ]; then
+  mkdir -p "$(dirname "$bin")"
+  curl -fsSL -o "$bin.tmp" "https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-$os-$arch"
+  chmod +x "$bin.tmp" && mv "$bin.tmp" "$bin"
+fi
+exec "$bin" "$@"

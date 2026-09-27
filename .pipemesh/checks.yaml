@@ -1,0 +1,13 @@
+# Pull request checks: test only what the change can affect, computed
+# per run from the Bazel graph against the merge base.
+stages: [test]
+jobs:
+  affected_tests:
+    stage: test
+    script: |
+      base=$(git merge-base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" HEAD)
+      services=$(tools/affected.sh "$base" HEAD)
+      if [ -z "$services" ]; then echo "no service affected"; exit 0; fi
+      echo "affected: $services"
+      tools/bazelw test $(printf '//services/%s/... ' $services)
+      tools/gen-rules.sh --check

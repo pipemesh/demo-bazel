@@ -1,0 +1,24 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_library", "java_test")
+
+java_library(
+    name = "lib",
+    srcs = glob(["src/**/*.java"]),
+    deps = ["//libs/http", "//libs/money"],
+)
+
+# The deployable. `tools/affected.sh` finds every target tagged
+# "deployable"; the service pipeline ships :server_deploy.jar.
+java_binary(
+    name = "server",
+    main_class = "dev.pipemesh.demo.catalog.CatalogService",
+    tags = ["deployable"],
+    runtime_deps = [":lib"],
+)
+
+java_test(
+    name = "test",
+    srcs = glob(["test/**/*.java"]),
+    main_class = "dev.pipemesh.demo.catalog.CatalogServiceTest",
+    use_testrunner = False,
+    deps = [":lib", "//libs/http"],
+)
