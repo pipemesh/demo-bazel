@@ -22,30 +22,35 @@ dispatch:
 
     orders:
       stage: dispatch
+      needs: [graph_is_current]
       rules: [{ changes: !ref graph.orders }]
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: orders } }
     payments:
       stage: dispatch
+      needs: [graph_is_current]
       rules: [{ changes: !ref graph.payments }]
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: payments } }
     inventory:
       stage: dispatch
+      needs: [graph_is_current]
       rules: [{ changes: !ref graph.inventory }]
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: inventory } }
     notifications:
       stage: dispatch
+      needs: [graph_is_current]
       rules: [{ changes: !ref graph.notifications }]
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: notifications } }
     catalog:
       stage: dispatch
+      needs: [graph_is_current]
       rules: [{ changes: !ref graph.catalog }]
       delegate:
         type: pipeline
