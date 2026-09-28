@@ -6,18 +6,24 @@ stages: [build, staging, production]
 jobs:
   build:
     stage: build
-    # Bazel's disk and repository caches survive between runs: a rebuild
-    # recompiles what changed, and the JDK and Maven jars download once.
-    # The key moves with the dependency lockfile.
+    # Build steps come from a shared remote cache (BuildBuddy): a step any
+    # service's build already ran — the libraries they share — is fetched,
+    # not rebuilt. Pull requests read it and never write it.
+    secrets: [BUILDBUDDY_API_KEY]
+    setup:
+      - uses: bazel/remote-cache@1
+    # What the remote cache does not hold: Bazel itself and the external
+    # repositories (JDK, rules), downloaded once and kept between runs.
     cache:
-      key: bazel-${checksum:MODULE.bazel.lock}
+      key: bazel-downloads-${checksum:MODULE.bazel.lock}
       paths: [.bazel-cache]
     script: |
       # Bazel's Java launcher needs a C++ toolchain; the hosted image has none.
       command -v gcc >/dev/null || dnf install -y -q gcc gcc-c++
+      export XDG_CACHE_HOME=$PWD/.bazel-cache/xdg
       # Bazel 9 refuses a repo contents cache inside the workspace, and
       # cache: paths live in it: keep the download cache, not that one.
-      caches="--disk_cache=$PWD/.bazel-cache/disk --repository_cache=$PWD/.bazel-cache/repo --repo_contents_cache="
+      caches="--repository_cache=$PWD/.bazel-cache/repo --repo_contents_cache="
       tools/bazelw test $caches //services/$SERVICE/...
       tools/bazelw build $caches //services/$SERVICE:server_deploy.jar
       mkdir -p dist && cp bazel-bin/services/$SERVICE/server_deploy.jar dist/$SERVICE.jar
