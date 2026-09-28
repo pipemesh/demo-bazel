@@ -15,7 +15,9 @@ jobs:
     script: |
       # Bazel's Java launcher needs a C++ toolchain; the hosted image has none.
       command -v gcc >/dev/null || dnf install -y -q gcc gcc-c++
-      caches="--disk_cache=$PWD/.bazel-cache/disk --repository_cache=$PWD/.bazel-cache/repo"
+      # Bazel 9 refuses a repo contents cache inside the workspace, and
+      # cache: paths live in it: keep the download cache, not that one.
+      caches="--disk_cache=$PWD/.bazel-cache/disk --repository_cache=$PWD/.bazel-cache/repo --repo_contents_cache="
       tools/bazelw test $caches //services/$SERVICE/...
       tools/bazelw build $caches //services/$SERVICE:server_deploy.jar
       mkdir -p dist && cp bazel-bin/services/$SERVICE/server_deploy.jar dist/$SERVICE.jar
