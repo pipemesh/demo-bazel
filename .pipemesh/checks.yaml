@@ -12,4 +12,3 @@ jobs:
       if [ -z "$services" ]; then echo "no service affected"; exit 0; fi
       echo "affected: $services"
       tools/bazelw test $(printf '//services/%s/... ' $services)
-      tools/gen-rules.sh --check

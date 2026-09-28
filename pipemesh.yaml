@@ -2,56 +2,68 @@
 # out to a pipeline per service, and a service's pipeline receives the
 # revision only when the Bazel graph says the change can affect it.
 #
-# How: tools/gen-rules.sh turns each deployable's dependency closure
-# into the path list in .pipemesh/affected.yaml, and each dispatch job
-# gates on it with `changes:`. PipeMesh diffs against the revision that
-# job last dispatched, so a service that sat out ten commits still sees
-# all ten when the next one touches it.
+# How: the graph job fingerprints every deployable service from Bazel's
+# own target hashes (tools/fingerprint.sh, bazel-diff) and produces one
+# entry per service. Each dispatch job consumes its service's entry and
+# dispatches when it changed since that job last dispatched — so a
+# service that sat out ten commits still sees all ten when the next one
+# changes it, and a README or an unrelated dependency bump reaches no one.
 
-graph: !include .pipemesh/affected.yaml
 service: !include .pipemesh/service.yaml
 
 dispatch:
-  stages: [verify, dispatch]
+  stages: [graph, dispatch]
   jobs:
-    # A stale graph would under-dispatch silently, so it stops the
-    # revision before anything is dispatched.
-    graph_is_current:
-      stage: verify
-      script: tools/gen-rules.sh --check
+    graph:
+      stage: graph
+      # Bazel, bazelisk's download of it and the external repositories
+      # survive between runs.
+      cache:
+        key: graph-${checksum:MODULE.bazel.lock}
+        paths: [.bazel-cache]
+      script: |
+        export XDG_CACHE_HOME=$PWD/.bazel-cache/xdg
+        printf 'common --repository_cache=%s --repo_contents_cache=\n' "$PWD/.bazel-cache/repo" > ~/.bazelrc
+        tools/fingerprint.sh fingerprints
+      produces:
+        orders: fingerprints/orders
+        payments: fingerprints/payments
+        inventory: fingerprints/inventory
+        notifications: fingerprints/notifications
+        catalog: fingerprints/catalog
 
     orders:
       stage: dispatch
-      needs: [graph_is_current]
-      rules: [{ changes: !ref graph.orders }]
+      consumes: [graph/orders]
+      rules: [{ consumed: changed }]
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: orders } }
     payments:
       stage: dispatch
-      needs: [graph_is_current]
-      rules: [{ changes: !ref graph.payments }]
+      consumes: [graph/payments]
+      rules: [{ consumed: changed }]
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: payments } }
     inventory:
       stage: dispatch
-      needs: [graph_is_current]
-      rules: [{ changes: !ref graph.inventory }]
+      consumes: [graph/inventory]
+      rules: [{ consumed: changed }]
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: inventory } }
     notifications:
       stage: dispatch
-      needs: [graph_is_current]
-      rules: [{ changes: !ref graph.notifications }]
+      consumes: [graph/notifications]
+      rules: [{ consumed: changed }]
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: notifications } }
     catalog:
       stage: dispatch
-      needs: [graph_is_current]
-      rules: [{ changes: !ref graph.catalog }]
+      consumes: [graph/catalog]
+      rules: [{ consumed: changed }]
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: catalog } }
