@@ -6,20 +6,32 @@ stages: [build, staging, production]
 jobs:
   build:
     stage: build
+    # Bazel's disk and repository caches survive between runs: a rebuild
+    # recompiles what changed, and the JDK and Maven jars download once.
+    # The key moves with the dependency lockfile.
+    cache:
+      key: bazel-${checksum:MODULE.bazel.lock}
+      paths: [.bazel-cache]
     script: |
       # Bazel's Java launcher needs a C++ toolchain; the hosted image has none.
       command -v gcc >/dev/null || dnf install -y -q gcc gcc-c++
-      tools/bazelw test //services/$SERVICE/...
-      tools/bazelw build //services/$SERVICE:server_deploy.jar
+      caches="--disk_cache=$PWD/.bazel-cache/disk --repository_cache=$PWD/.bazel-cache/repo"
+      tools/bazelw test $caches //services/$SERVICE/...
+      tools/bazelw build $caches //services/$SERVICE:server_deploy.jar
       mkdir -p dist && cp bazel-bin/services/$SERVICE/server_deploy.jar dist/$SERVICE.jar
     produces:
       jar: { path: "dist/*.jar" }
+  # Bazel builds the jar byte for byte: a change that leaves this service's
+  # jar identical (a README, a comment, a sibling's code) builds and stops
+  # here — the deploys run only when the jar they ship is new to them.
   deploy_staging:
     stage: staging
     consumes: [build/jar]
+    rules: [{ consumed: changed }]
     script: deploy/deploy.sh $SERVICE staging
   deploy_prod:
     stage: production
     needs: [deploy_staging]
     consumes: [build/jar]
+    rules: [{ consumed: changed }]
     script: deploy/deploy.sh $SERVICE production
