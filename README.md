@@ -27,3 +27,5 @@ nothing does.
 
 Each service pipeline lives under the dispatch pipeline on PipeMesh:
 `/github.com/pipemesh/demo-bazel/-/pipeline/<service>`.
+
+The dispatch pipeline reads Bazel, not paths: see `tools/fingerprint.sh`.

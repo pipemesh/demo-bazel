@@ -1,3 +1,4 @@
+# demo-bazel: five services, three libraries.
 module(name = "demo_bazel")
 
 bazel_dep(name = "rules_java", version = "9.9.0")
