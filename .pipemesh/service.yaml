@@ -12,13 +12,14 @@ jobs:
       tools/bazelw test //services/$SERVICE/...
       tools/bazelw build //services/$SERVICE:server_deploy.jar
       mkdir -p dist && cp bazel-bin/services/$SERVICE/server_deploy.jar dist/$SERVICE.jar
-    artifacts:
-      paths: [dist/]
+    produces:
+      jar: { path: "dist/*.jar" }
   deploy_staging:
     stage: staging
-    needs: [build]
+    consumes: [build/jar]
     script: deploy/deploy.sh $SERVICE staging
   deploy_prod:
     stage: production
-    needs: [deploy_staging]   # the jar arrives through this edge
+    needs: [deploy_staging]
+    consumes: [build/jar]
     script: deploy/deploy.sh $SERVICE production
