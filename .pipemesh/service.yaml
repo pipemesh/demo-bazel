@@ -11,7 +11,7 @@ jobs:
     # repositories; build steps come from a shared remote cache (BuildBuddy),
     # so a step any service already ran is fetched, not rebuilt. Pull
     # requests read the cache and never write it.
-    image: ghcr.io/pipemesh/demo-bazel-ci@sha256:c24338d095b907593765a2fe9948f6791ce0279bdfca55d84d7f8334f4d1e396
+    image: ghcr.io/pipemesh/demo-bazel-ci@sha256:e85f80f1b4445d7832de6fa7dbbec1e9311da4968bc3445fe32b36296e59e9e1
     secrets: [BUILDBUDDY_API_KEY]
     setup:
       - uses: bazel/remote-cache@1

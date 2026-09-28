@@ -17,7 +17,7 @@ dispatch:
     graph:
       stage: graph
       # The CI image carries Bazel, the external repositories and bazel-diff.
-      image: ghcr.io/pipemesh/demo-bazel-ci@sha256:c24338d095b907593765a2fe9948f6791ce0279bdfca55d84d7f8334f4d1e396
+      image: ghcr.io/pipemesh/demo-bazel-ci@sha256:e85f80f1b4445d7832de6fa7dbbec1e9311da4968bc3445fe32b36296e59e9e1
       script: |
         tools/fingerprint.sh fingerprints
       produces:
