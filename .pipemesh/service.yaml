@@ -1,4 +1,4 @@
-# See README.md for how revisions reach this pipeline.
+# See README.md for how revisions reach this pipeline and what it ships.
 # One service's pipeline. The dispatch pipeline registers it once per
 # service (orders, payments, …) with SERVICE set; each copy has its own
 # history, board and URL, and receives only the revisions the Bazel
