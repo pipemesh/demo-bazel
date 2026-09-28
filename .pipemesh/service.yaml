@@ -16,12 +16,15 @@ jobs:
     # What the remote cache does not hold: Bazel itself and the external
     # repositories (JDK, rules), downloaded once and kept between runs.
     cache:
-      key: bazel-downloads-${checksum:MODULE.bazel.lock}
+      key: bazel-downloads-v2-${checksum:MODULE.bazel.lock}
       paths: [.bazel-cache]
     script: |
       # Bazel's Java launcher needs a C++ toolchain; the hosted image has none.
       command -v gcc >/dev/null || dnf install -y -q gcc gcc-c++
-      export XDG_CACHE_HOME=$PWD/.bazel-cache/xdg
+      # Only bazelisk's copy of Bazel lives in the cache: Bazel's own output
+      # tree stays per run, so builds come from the remote cache, not from
+      # a stale local snapshot.
+      export BAZELISK_HOME=$PWD/.bazel-cache/bazelisk
       # Bazel 9 refuses a repo contents cache inside the workspace, and
       # cache: paths live in it: keep the download cache, not that one.
       caches="--repository_cache=$PWD/.bazel-cache/repo --repo_contents_cache="
