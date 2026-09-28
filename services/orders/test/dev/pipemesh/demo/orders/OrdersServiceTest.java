@@ -7,3 +7,4 @@ public final class OrdersServiceTest {
         System.out.println("ok: " + out);
     }
 }
+// Orders' tests pin the receipt format.
