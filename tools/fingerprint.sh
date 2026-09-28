@@ -7,6 +7,10 @@
 # or tests, and a README, a sibling's code or an unrelated dependency
 # bump leave it alone.
 #
+# Every service's file also covers what its pipeline runs outside Bazel
+# (the service pipeline's config and the deploy scripts), so a change to
+# how services ship reaches them too.
+#
 # The dispatch pipeline produces these files as entries and dispatches a
 # service when its entry changed since that service's last dispatch.
 set -euo pipefail
@@ -36,10 +40,13 @@ hashes=$(mktemp)
 trap 'rm -f "$hashes"' EXIT
 "$bin" generate-hashes -w "$PWD" -b "$PWD/tools/bazelw" "$hashes" >&2
 
+# The files every service pipeline runs besides its Bazel targets.
+shipping=$(git ls-files -s -- .pipemesh/service.yaml deploy | sha256)
+
 rm -rf "$out" && mkdir -p "$out"
 for t in $(tools/bazelw query --noshow_progress 'attr(tags, "\bdeployable\b", //...)' 2>/dev/null); do
   pkg=${t%%:*}
   svc=${pkg##*/}
-  grep -o "\"$pkg:[^\"]*\":\"[^\"]*\"" "$hashes" | sort | sha256 > "$out/$svc"
+  { grep -o "\"$pkg:[^\"]*\":\"[^\"]*\"" "$hashes" | sort; echo "shipping $shipping"; } | sha256 > "$out/$svc"
   echo "$svc $(cut -c1-12 "$out/$svc")"
 done
