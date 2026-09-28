@@ -73,3 +73,4 @@ pipemesh:
     pipeline: !ref dispatch
   workflows:
     checks: { body: !include .pipemesh/checks.yaml, on: pull_request }
+    ci_image: { body: !include .pipemesh/ci-image.yaml, on: push }

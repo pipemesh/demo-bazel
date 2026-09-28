@@ -28,7 +28,8 @@ case "$(uname -s)-$(uname -m)" in
   *) echo "no bazel-diff build for $(uname -s)-$(uname -m)" >&2; exit 1 ;;
 esac
 sha256() { if command -v sha256sum >/dev/null; then sha256sum | cut -d' ' -f1; else shasum -a 256 | cut -d' ' -f1; fi; }
-bin="${XDG_CACHE_HOME:-$HOME/.cache}/bazel-diff-$version-$asset"
+# The CI image carries bazel-diff at $BAZEL_DIFF; elsewhere it is fetched once.
+bin="${BAZEL_DIFF:-${XDG_CACHE_HOME:-$HOME/.cache}/bazel-diff-$version-$asset}"
 if [ ! -x "$bin" ]; then
   mkdir -p "$(dirname "$bin")"
   curl -fsSL -o "$bin.tmp" "https://github.com/Tinder/bazel-diff/releases/download/$version/$asset"
