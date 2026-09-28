@@ -7,29 +7,17 @@ stages: [build, staging, production]
 jobs:
   build:
     stage: build
-    # Build steps come from a shared remote cache (BuildBuddy): a step any
-    # service's build already ran — the libraries they share — is fetched,
-    # not rebuilt. Pull requests read it and never write it.
+    # The CI image (ci/Dockerfile) carries gcc, Bazel and the external
+    # repositories; build steps come from a shared remote cache (BuildBuddy),
+    # so a step any service already ran is fetched, not rebuilt. Pull
+    # requests read the cache and never write it.
+    image: ghcr.io/pipemesh/demo-bazel-ci@sha256:c24338d095b907593765a2fe9948f6791ce0279bdfca55d84d7f8334f4d1e396
     secrets: [BUILDBUDDY_API_KEY]
     setup:
       - uses: bazel/remote-cache@1
-    # What the remote cache does not hold: Bazel itself and the external
-    # repositories (JDK, rules), downloaded once and kept between runs.
-    cache:
-      key: bazel-downloads-v2-${checksum:MODULE.bazel.lock}
-      paths: [.bazel-cache]
     script: |
-      # Bazel's Java launcher needs a C++ toolchain; the hosted image has none.
-      command -v gcc >/dev/null || dnf install -y -q gcc gcc-c++
-      # Only bazelisk's copy of Bazel lives in the cache: Bazel's own output
-      # tree stays per run, so builds come from the remote cache, not from
-      # a stale local snapshot.
-      export BAZELISK_HOME=$PWD/.bazel-cache/bazelisk
-      # Bazel 9 refuses a repo contents cache inside the workspace, and
-      # cache: paths live in it: keep the download cache, not that one.
-      caches="--repository_cache=$PWD/.bazel-cache/repo --repo_contents_cache="
-      tools/bazelw test $caches //services/$SERVICE/...
-      tools/bazelw build $caches //services/$SERVICE:server_deploy.jar
+      tools/bazelw test //services/$SERVICE/...
+      tools/bazelw build //services/$SERVICE:server_deploy.jar
       mkdir -p dist && cp bazel-bin/services/$SERVICE/server_deploy.jar dist/$SERVICE.jar
     produces:
       jar: { path: "dist/*.jar" }

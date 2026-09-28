@@ -16,14 +16,9 @@ dispatch:
   jobs:
     graph:
       stage: graph
-      # Bazel, bazelisk's download of it and the external repositories
-      # survive between runs.
-      cache:
-        key: graph-${checksum:MODULE.bazel.lock}
-        paths: [.bazel-cache]
+      # The CI image carries Bazel, the external repositories and bazel-diff.
+      image: ghcr.io/pipemesh/demo-bazel-ci@sha256:c24338d095b907593765a2fe9948f6791ce0279bdfca55d84d7f8334f4d1e396
       script: |
-        export XDG_CACHE_HOME=$PWD/.bazel-cache/xdg
-        printf 'common --repository_cache=%s --repo_contents_cache=\n' "$PWD/.bazel-cache/repo" > ~/.bazelrc
         tools/fingerprint.sh fingerprints
       produces:
         orders: fingerprints/orders
