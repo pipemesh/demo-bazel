@@ -36,11 +36,16 @@ RUN set -eu; \
 
 ENV BAZELISK_HOME=/opt/bazelisk BAZEL_DIFF=/usr/local/bin/bazel-diff
 
-# Every bazel command reads the external repositories fetched below.
-RUN printf 'common --repository_cache=/opt/bazel/repo\ncommon --repo_contents_cache=\n' > /etc/bazel.bazelrc
+# Every bazel command starts from what is prepared below: Bazel's
+# installation already extracted, and the external repositories (JDK,
+# rules) downloaded AND unpacked — a build reuses them instead of
+# unzipping ~1 GB on every run.
+RUN printf '%s\n' \
+      'startup --install_base=/opt/bazel/install' \
+      'common --repository_cache=/opt/bazel/repo' \
+      'common --repo_contents_cache=/opt/bazel/contents' \
+    > /etc/bazel.bazelrc
 
-# Bazel itself and the external repositories, fetched once; the workspace
-# and Bazel's output tree are thrown away.
 COPY . /tmp/ws
 RUN cd /tmp/ws && bazelisk fetch //... && bazelisk shutdown \
  && rm -rf /tmp/ws /root/.cache/bazel

@@ -7,9 +7,10 @@
 # or tests, and a README, a sibling's code or an unrelated dependency
 # bump leave it alone.
 #
-# Every service's file also covers what its pipeline runs outside Bazel
-# (the service pipeline's config and the deploy scripts), so a change to
-# how services ship reaches them too.
+# Every service's file also covers what the target hashes cannot see: the
+# Bazel release and flags every build runs with (.bazelversion, .bazelrc),
+# the service pipeline's config and the deploy scripts — so a change to how
+# services build or ship reaches them too.
 #
 # The dispatch pipeline produces these files as entries and dispatches a
 # service when its entry changed since that service's last dispatch.
@@ -41,8 +42,8 @@ hashes=$(mktemp)
 trap 'rm -f "$hashes"' EXIT
 "$bin" generate-hashes -w "$PWD" -b "$PWD/tools/bazelw" "$hashes" >&2
 
-# The files every service pipeline runs besides its Bazel targets.
-shipping=$(git ls-files -s -- .pipemesh/service.yaml deploy | sha256)
+# What every service's build and pipeline depend on outside the target graph.
+shipping=$(git ls-files -s -- .bazelversion .bazelrc .pipemesh/service.yaml deploy | sha256)
 
 rm -rf "$out" && mkdir -p "$out"
 for t in $(tools/bazelw query --noshow_progress 'attr(tags, "\bdeployable\b", //...)' 2>/dev/null); do
