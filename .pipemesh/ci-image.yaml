@@ -1,6 +1,6 @@
 # Builds ghcr.io/pipemesh/demo-bazel-ci when what it bakes in changes.
 # The build jobs pin it by digest: after a rebuild, update the digest in
-# .pipemesh/service.yaml and pipemesh.yaml.
+# .pipemesh/service.yaml, .pipemesh/checks.yaml and pipemesh.yaml.
 stages: [image]
 jobs:
   ci_image:
