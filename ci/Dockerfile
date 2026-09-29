@@ -23,7 +23,7 @@ RUN set -eu; \
     echo "$sum  /usr/local/bin/bazelisk" | sha256sum -c -; \
     chmod +x /usr/local/bin/bazelisk
 
-# bazel-diff: the graph job's target hashes (tools/fingerprint.sh).
+# bazel-diff: the graph job's target hashes (the bazel/fingerprint component).
 RUN set -eu; \
     case "$TARGETARCH" in \
       amd64) sum=ab9dea07341a4d764aaed15225ac5ea65f381fc1a1ae304e9fc0147b5e832a87 ;; \

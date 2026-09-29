@@ -3,7 +3,7 @@
 # revision only when the Bazel graph says the change can affect it.
 #
 # How: the graph job fingerprints every deployable service from Bazel's
-# own target hashes (tools/fingerprint.sh, bazel-diff) and produces one
+# own target hashes (the bazel/fingerprint component, bazel-diff) and produces one
 # entry per service. Each dispatch job consumes its service's entry and
 # dispatches when it changed since that job last dispatched — so a
 # service that sat out ten commits still sees all ten when the next one
@@ -17,9 +17,13 @@ dispatch:
     graph:
       stage: graph
       # The CI image carries Bazel, the external repositories and bazel-diff.
-      image: ghcr.io/pipemesh/demo-bazel-ci@sha256:e85f80f1b4445d7832de6fa7dbbec1e9311da4968bc3445fe32b36296e59e9e1
-      script: |
-        tools/fingerprint.sh fingerprints
+      # Every fingerprint also covers the Bazel release and flags, the
+      # service pipeline's config and the deploy scripts.
+      uses: bazel/fingerprint@1
+      with:
+        image: ghcr.io/pipemesh/demo-bazel-ci@sha256:e85f80f1b4445d7832de6fa7dbbec1e9311da4968bc3445fe32b36296e59e9e1
+        bazel: tools/bazelw
+        extra: .bazelversion .bazelrc .pipemesh/service.yaml deploy
       produces:
         orders: fingerprints/orders
         payments: fingerprints/payments
