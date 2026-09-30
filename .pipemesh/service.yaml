@@ -1,4 +1,5 @@
-# See README.md for how revisions reach this pipeline and what it ships.
+# See README.md for how revisions reach this pipeline and what it ships
+# (it runs in the CI image the dispatch pipeline builds: image_from).
 # One service's pipeline. The dispatch pipeline registers it once per
 # service (orders, payments, …) with SERVICE set; each copy has its own
 # history, board and URL, and receives only the revisions the Bazel
