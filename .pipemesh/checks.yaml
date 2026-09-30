@@ -7,7 +7,7 @@ jobs:
   # content (this job and ci/) is reused, the default branch's first.
   build_ci:
     stage: image
-    sources: [ci/**]
+    paths: [ci]
     skip: built
     script: echo "ci/ changed - building the CI image"
     publish:

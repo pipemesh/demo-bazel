@@ -19,7 +19,7 @@ dispatch:
     # content (this job and ci/) is reused instead of built again.
     build_ci:
       stage: image
-      sources: [ci/**]
+      paths: [ci]
       skip: built
       script: echo "ci/ changed - building the CI image"
       publish:
@@ -49,35 +49,35 @@ dispatch:
     orders:
       stage: dispatch
       consumes: [graph/orders]
-      sources: []   # reads only the entry it consumes
+      paths: []   # reads only the entry it consumes
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: orders } }
     payments:
       stage: dispatch
       consumes: [graph/payments]
-      sources: []   # reads only the entry it consumes
+      paths: []   # reads only the entry it consumes
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: payments } }
     inventory:
       stage: dispatch
       consumes: [graph/inventory]
-      sources: []   # reads only the entry it consumes
+      paths: []   # reads only the entry it consumes
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: inventory } }
     notifications:
       stage: dispatch
       consumes: [graph/notifications]
-      sources: []   # reads only the entry it consumes
+      paths: []   # reads only the entry it consumes
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: notifications } }
     catalog:
       stage: dispatch
       consumes: [graph/catalog]
-      sources: []   # reads only the entry it consumes
+      paths: []   # reads only the entry it consumes
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: catalog } }
