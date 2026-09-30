@@ -15,11 +15,12 @@ dispatch:
   stages: [image, graph, dispatch]
   jobs:
     # The CI image: ci/ is its whole build context, so it is exactly
-    # what is in that directory. It rebuilds only when ci/ changes, and
-    # an image already built from the same content is reused.
+    # what is in that directory. An image already built from the same
+    # content (this job and ci/) is reused instead of built again.
     build_ci:
       stage: image
-      rules: [{ changes: [ci/**] }]
+      sources: [ci/**]
+      skip: built
       script: echo "ci/ changed - building the CI image"
       publish:
         - { context: ci, key: ci_image }
@@ -48,35 +49,35 @@ dispatch:
     orders:
       stage: dispatch
       consumes: [graph/orders]
-      rules: [{ consumed: changed }]
+      sources: []   # reads only the entry it consumes
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: orders } }
     payments:
       stage: dispatch
       consumes: [graph/payments]
-      rules: [{ consumed: changed }]
+      sources: []   # reads only the entry it consumes
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: payments } }
     inventory:
       stage: dispatch
       consumes: [graph/inventory]
-      rules: [{ consumed: changed }]
+      sources: []   # reads only the entry it consumes
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: inventory } }
     notifications:
       stage: dispatch
       consumes: [graph/notifications]
-      rules: [{ consumed: changed }]
+      sources: []   # reads only the entry it consumes
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: notifications } }
     catalog:
       stage: dispatch
       consumes: [graph/catalog]
-      rules: [{ consumed: changed }]
+      sources: []   # reads only the entry it consumes
       delegate:
         type: pipeline
         params: { body: !ref service, variables: { SERVICE: catalog } }

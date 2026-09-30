@@ -14,10 +14,11 @@ libs/http    ─┴─ every service
   every service with the `bazel/fingerprint@1` component (bazel-diff's
   target hashes: a fingerprint changes exactly when a change can change
   the service), and one `delegate: pipeline` job per service consumes
-  its fingerprint and dispatches when it changed (`consumed: changed`).
+  its fingerprint and dispatches when it changed (`sources: []`: the
+  entry is its only input).
 - `.pipemesh/service.yaml` — each service's own pipeline: build + test
   with Bazel, then staging and production, which deploy only a jar that
-  is new to them (`consumed: changed` again).
+  is new to them, or a changed deploy script (`sources: [deploy/**]`).
 - `tools/affected.sh <base> [<head>]` — the services a diff affects
   (`rdeps` of the touched packages); pull request checks test only those.
 

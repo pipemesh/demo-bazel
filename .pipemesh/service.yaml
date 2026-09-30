@@ -34,11 +34,11 @@ jobs:
   deploy_staging:
     stage: staging
     consumes: [build/jar]
-    rules: [{ consumed: changed }, { changes: [deploy/**] }]
+    sources: [deploy/**]
     script: deploy/deploy.sh $SERVICE staging
   deploy_prod:
     stage: production
     needs: [deploy_staging]
     consumes: [build/jar]
-    rules: [{ consumed: changed }, { changes: [deploy/**] }]
+    sources: [deploy/**]
     script: deploy/deploy.sh $SERVICE production
