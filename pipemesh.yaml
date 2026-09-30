@@ -12,16 +12,30 @@
 service: !include .pipemesh/service.yaml
 
 dispatch:
-  stages: [graph, dispatch]
+  stages: [image, graph, dispatch]
   jobs:
+    # The CI image: ci/ is its whole build context, so it is exactly
+    # what is in that directory. It rebuilds only when ci/ changes, and
+    # an image already built from the same content is reused.
+    build_ci:
+      stage: image
+      rules: [{ changes: [ci/**] }]
+      script: echo "ci/ changed - building the CI image"
+      publish:
+        - { context: ci, key: ci_image }
+
     graph:
       stage: graph
-      # The CI image carries Bazel, the external repositories and bazel-diff.
       # Every fingerprint also covers the Bazel release and flags, the
       # service pipeline's config and the deploy scripts.
       uses: bazel/fingerprint@1
+      image_from: build_ci/ci_image
+      # External repositories: downloaded once per MODULE.bazel.lock.
+      cache:
+        key: bazel-repo-${checksum:MODULE.bazel.lock}
+        restore_keys: [bazel-repo-]
+        paths: [.cache/bazel-repo]
       with:
-        image: ghcr.io/pipemesh/demo-bazel-ci@sha256:e85f80f1b4445d7832de6fa7dbbec1e9311da4968bc3445fe32b36296e59e9e1
         bazel: tools/bazelw
         extra: .bazelversion .bazelrc .pipemesh/service.yaml deploy
       produces:
@@ -72,4 +86,3 @@ pipemesh:
     pipeline: !ref dispatch
   workflows:
     checks: { body: !include .pipemesh/checks.yaml, on: pull_request }
-    ci_image: { body: !include .pipemesh/ci-image.yaml, on: push }
