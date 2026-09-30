@@ -8,6 +8,7 @@ stages: [build, staging, production]
 jobs:
   build:
     stage: build
+    timeout_seconds: 1200
     # The CI image the dispatch pipeline built (gcc, Bazel, bazel-diff);
     # build steps come from a shared remote cache (BuildBuddy), so a step
     # any service already ran is fetched, not rebuilt.
