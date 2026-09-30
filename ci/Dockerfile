@@ -1,8 +1,10 @@
 # The image demo-bazel's CI builds in: a C++ toolchain (Bazel's Java
-# launcher needs one), bazelisk, the Bazel release .bazelversion pins,
-# every external repository the build uses (JDK, rules) and bazel-diff —
-# fetched once here instead of on every run. Rebuilt by the ci-image
-# workflow when any of those inputs change.
+# launcher needs one), bazelisk, bazel-diff, and the Bazel release named by
+# ci/.bazelversion, installed and extracted. Tools only: this directory is
+# the whole build context, so the image is exactly what is in it, and
+# PipeMesh rebuilds it when (and only when) something here changes
+# (build_ci in pipemesh.yaml). Keep ci/.bazelversion in step with
+# /.bazelversion; a mismatch only makes jobs download the other release.
 FROM debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251
 ARG TARGETARCH
 
@@ -36,16 +38,17 @@ RUN set -eu; \
 
 ENV BAZELISK_HOME=/opt/bazelisk BAZEL_DIFF=/usr/local/bin/bazel-diff
 
-# Every bazel command starts from what is prepared below: Bazel's
-# installation already extracted, and the external repositories (JDK,
-# rules) downloaded AND unpacked — a build reuses them instead of
-# unzipping ~1 GB on every run.
+# Every bazel command starts from Bazel's installation, already extracted.
+# External repositories are not in the image: they download into the
+# repository cache inside the workspace (a relative path is the
+# workspace's), which the jobs keep in a PipeMesh
+# cache keyed on MODULE.bazel.lock; their unpacked contents stay outside it
+# (Bazel refuses a repo contents cache inside the main repository).
 RUN printf '%s\n' \
       'startup --install_base=/opt/bazel/install' \
-      'common --repository_cache=/opt/bazel/repo' \
-      'common --repo_contents_cache=/opt/bazel/contents' \
+      'common --repository_cache=.cache/bazel-repo' \
+      'common --repo_contents_cache=/tmp/bazel-repo-contents' \
     > /etc/bazel.bazelrc
-
-COPY . /tmp/ws
-RUN cd /tmp/ws && bazelisk fetch //... && bazelisk shutdown \
- && rm -rf /tmp/ws /root/.cache/bazel
+COPY .bazelversion /opt/bazel/.bazelversion
+RUN cd /opt/bazel && USE_BAZEL_VERSION="$(cat .bazelversion)" bazelisk version \
+ && USE_BAZEL_VERSION="$(cat .bazelversion)" bazelisk shutdown || true

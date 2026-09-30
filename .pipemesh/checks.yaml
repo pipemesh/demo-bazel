@@ -1,11 +1,27 @@
 # Pull request checks: test only what the change can affect, computed
 # per run from the Bazel graph against the merge base.
-stages: [test]
+stages: [image, test]
 jobs:
+  # The CI image: ci/ is its whole build context, so it is exactly
+  # what is in that directory. It rebuilds only when ci/ changes, and
+  # an image already built from the same content is reused.
+  build_ci:
+    stage: image
+    rules: [{ changes: [ci/**] }]
+    script: echo "ci/ changed - building the CI image"
+    publish:
+      - { context: ci, key: ci_image }
+
   affected_tests:
     stage: test
-    # The CI image: Bazel, gcc and the external repositories baked in.
-    image: ghcr.io/pipemesh/demo-bazel-ci@sha256:e85f80f1b4445d7832de6fa7dbbec1e9311da4968bc3445fe32b36296e59e9e1
+    # The CI image: a pull request that changes ci/ builds and tests its
+    # own; otherwise it runs in the default branch's.
+    image_from: build_ci/ci_image
+    # External repositories: downloaded once per MODULE.bazel.lock.
+    cache:
+      key: bazel-repo-${checksum:MODULE.bazel.lock}
+      restore_keys: [bazel-repo-]
+      paths: [.cache/bazel-repo]
     script: |
       base=$(git merge-base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" HEAD)
       services=$(tools/affected.sh "$base" HEAD)
