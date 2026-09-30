@@ -3,11 +3,12 @@
 stages: [image, test]
 jobs:
   # The CI image: ci/ is its whole build context, so it is exactly
-  # what is in that directory. It rebuilds only when ci/ changes, and
-  # an image already built from the same content is reused.
+  # what is in that directory. An image already built from the same
+  # content (this job and ci/) is reused, the default branch's first.
   build_ci:
     stage: image
-    rules: [{ changes: [ci/**] }]
+    sources: [ci/**]
+    skip: built
     script: echo "ci/ changed - building the CI image"
     publish:
       - { context: ci, key: ci_image }
