@@ -8,3 +8,4 @@ public final class OrdersServiceTest {
     }
 }
 // Orders' tests pin the receipt format.
+// Probe for pipemesh/pipemesh#791: a PR that touches orders runs Bazel, to time its cache.
