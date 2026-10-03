@@ -6,7 +6,10 @@
 # graph says change that service.
 stages: [build, staging, production]
 jobs:
+  # A build checks out the whole tree: Bazel reads MODULE.bazel, .bazelrc,
+  # tools/ and every package the service depends on.
   build:
+    kind: build
     stage: build
     timeout_seconds: 1200
     # The CI image the dispatch pipeline built (gcc, Bazel, bazel-diff);
@@ -29,16 +32,19 @@ jobs:
       jar: { path: "dist/*.jar" }
   # Bazel builds the jar byte for byte: a change that leaves this service's
   # jar identical (a README, a comment, a sibling's code) builds and stops
-  # here — the deploys run when the jar they ship is new to them, or when
-  # the deploy script changed since they last ran.
+  # here — the deploys check out only deploy/ and run when the jar they
+  # ship is new to them, or when the deploy script changed since they
+  # last ran.
   deploy_staging:
+    kind: deploy
     stage: staging
     consumes: [build/jar]
-    paths: [deploy]
+    checkout: [deploy]
     script: deploy/deploy.sh $SERVICE staging
   deploy_prod:
+    kind: deploy
     stage: production
     needs: [deploy_staging]
     consumes: [build/jar]
-    paths: [deploy]
+    checkout: [deploy]
     script: deploy/deploy.sh $SERVICE production

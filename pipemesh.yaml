@@ -1,4 +1,4 @@
-# A Bazel monorepo on PipeMesh: one dispatch pipeline fans each revision
+# A Bazel monorepo on Pipemesh: one dispatch pipeline fans each revision
 # out to a pipeline per service, and a service's pipeline receives the
 # revision only when the Bazel graph says the change can affect it.
 #
@@ -8,6 +8,9 @@
 # dispatches when it changed since that job last dispatched — so a
 # service that sat out ten commits still sees all ten when the next one
 # changes it, and a README or an unrelated dependency bump reaches no one.
+#
+# Every job says what it is (kind:) and what it reads (checkout:); the
+# kind sets the defaults.
 
 service: !include .pipemesh/service.yaml
 
@@ -18,14 +21,17 @@ dispatch:
     # what is in that directory. An image already built from the same
     # content (this job and ci/) is reused instead of built again.
     build_ci:
+      kind: build
       stage: image
-      paths: [ci]
-      skip: built
+      checkout: [ci]
       script: echo "ci/ changed - building the CI image"
       publish:
         - { context: ci, key: ci_image }
 
+    # A build that checks out the whole tree: bazel-diff hashes every
+    # target, so it reads MODULE.bazel, .bazelrc, tools/ and every package.
     graph:
+      kind: build
       stage: graph
       # Every fingerprint also covers the Bazel release and flags, the
       # service pipeline's config and the deploy scripts.
@@ -46,41 +52,39 @@ dispatch:
         notifications: fingerprints/notifications
         catalog: fingerprints/catalog
 
+    # One child pipeline per service. A kind: pipeline job checks out
+    # nothing, so the entry it consumes is its only input: it hands the
+    # revision over only when that entry changed.
     orders:
+      kind: pipeline
       stage: dispatch
       consumes: [graph/orders]
-      paths: []   # reads only the entry it consumes
-      delegate:
-        type: pipeline
-        params: { body: !ref service, variables: { SERVICE: orders } }
+      body: !ref service
+      variables: { SERVICE: orders }
     payments:
+      kind: pipeline
       stage: dispatch
       consumes: [graph/payments]
-      paths: []   # reads only the entry it consumes
-      delegate:
-        type: pipeline
-        params: { body: !ref service, variables: { SERVICE: payments } }
+      body: !ref service
+      variables: { SERVICE: payments }
     inventory:
+      kind: pipeline
       stage: dispatch
       consumes: [graph/inventory]
-      paths: []   # reads only the entry it consumes
-      delegate:
-        type: pipeline
-        params: { body: !ref service, variables: { SERVICE: inventory } }
+      body: !ref service
+      variables: { SERVICE: inventory }
     notifications:
+      kind: pipeline
       stage: dispatch
       consumes: [graph/notifications]
-      paths: []   # reads only the entry it consumes
-      delegate:
-        type: pipeline
-        params: { body: !ref service, variables: { SERVICE: notifications } }
+      body: !ref service
+      variables: { SERVICE: notifications }
     catalog:
+      kind: pipeline
       stage: dispatch
       consumes: [graph/catalog]
-      paths: []   # reads only the entry it consumes
-      delegate:
-        type: pipeline
-        params: { body: !ref service, variables: { SERVICE: catalog } }
+      body: !ref service
+      variables: { SERVICE: catalog }
 
 pipemesh:
   pipelines:
