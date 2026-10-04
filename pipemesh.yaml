@@ -9,29 +9,35 @@
 # service that sat out ten commits still sees all ten when the next one
 # changes it, and a README or an unrelated dependency bump reaches no one.
 #
-# Every job says what it is (kind:) and what it reads (checkout:); the
-# kind sets the defaults.
+# Every job says what it is (job_type:) and what it reads (checkout:); the
+# job type sets the defaults.
 
 service: !include .pipemesh/service.yaml
 
 dispatch:
-  stages: [image, graph, dispatch]
+  type: pipeline
+  stages:
+    - image
+    - graph
+    - dispatch
   jobs:
     # The CI image: ci/ is its whole build context, so it is exactly
     # what is in that directory. An image already built from the same
     # content (this job and ci/) is reused instead of built again.
     build_ci:
-      kind: build
+      job_type: build
       stage: image
-      checkout: [ci]
+      checkout:
+        - ci
       script: echo "ci/ changed - building the CI image"
       publish:
-        - { context: ci, key: ci_image }
+        - context: ci
+          key: ci_image
 
     # A build that checks out the whole tree: bazel-diff hashes every
     # target, so it reads MODULE.bazel, .bazelrc, tools/ and every package.
     graph:
-      kind: build
+      job_type: build
       stage: graph
       # Every fingerprint also covers the Bazel release and flags, the
       # service pipeline's config and the deploy scripts.
@@ -40,8 +46,10 @@ dispatch:
       # External repositories: downloaded once per MODULE.bazel.lock.
       cache:
         key: bazel-repo-${checksum:MODULE.bazel.lock}
-        restore_keys: [bazel-repo-]
-        paths: [.cache/bazel-repo]
+        restore_keys:
+          - bazel-repo-
+        paths:
+          - .cache/bazel-repo
       with:
         bazel: tools/bazelw
         extra: .bazelversion .bazelrc .pipemesh/service.yaml deploy
@@ -52,42 +60,54 @@ dispatch:
         notifications: fingerprints/notifications
         catalog: fingerprints/catalog
 
-    # One child pipeline per service. A kind: pipeline job checks out
+    # One child pipeline per service. A job_type: pipeline job checks out
     # nothing, so the entry it consumes is its only input: it hands the
     # revision over only when that entry changed.
     orders:
-      kind: pipeline
+      job_type: pipeline
       stage: dispatch
-      consumes: [graph/orders]
+      consumes:
+        - graph/orders
       body: !ref service
-      variables: { SERVICE: orders }
+      variables:
+        SERVICE: orders
     payments:
-      kind: pipeline
+      job_type: pipeline
       stage: dispatch
-      consumes: [graph/payments]
+      consumes:
+        - graph/payments
       body: !ref service
-      variables: { SERVICE: payments }
+      variables:
+        SERVICE: payments
     inventory:
-      kind: pipeline
+      job_type: pipeline
       stage: dispatch
-      consumes: [graph/inventory]
+      consumes:
+        - graph/inventory
       body: !ref service
-      variables: { SERVICE: inventory }
+      variables:
+        SERVICE: inventory
     notifications:
-      kind: pipeline
+      job_type: pipeline
       stage: dispatch
-      consumes: [graph/notifications]
+      consumes:
+        - graph/notifications
       body: !ref service
-      variables: { SERVICE: notifications }
+      variables:
+        SERVICE: notifications
     catalog:
-      kind: pipeline
+      job_type: pipeline
       stage: dispatch
-      consumes: [graph/catalog]
+      consumes:
+        - graph/catalog
       body: !ref service
-      variables: { SERVICE: catalog }
+      variables:
+        SERVICE: catalog
 
 pipemesh:
   pipelines:
     pipeline: !ref dispatch
   workflows:
-    checks: { body: !include .pipemesh/checks.yaml, on: pull_request }
+    checks:
+      body: !include .pipemesh/checks.yaml
+      on: pull_request

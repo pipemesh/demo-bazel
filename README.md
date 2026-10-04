@@ -10,14 +10,14 @@ libs/events  ─┼─ orders    inventory  notifications
 libs/http    ─┴─ every service
 ```
 
-- `pipemesh.yaml` — the dispatch pipeline: a `graph` job (`kind: build`)
+- `pipemesh.yaml` — the dispatch pipeline: a `graph` job (`job_type: build`)
   fingerprints every service with the `bazel/fingerprint@1` component
   (bazel-diff's target hashes: a fingerprint changes exactly when a
-  change can change the service), and one `kind: pipeline` job per
+  change can change the service), and one `job_type: pipeline` job per
   service consumes its fingerprint and dispatches when it changed (it
   checks out nothing: the entry is its only input).
 - `.pipemesh/service.yaml` — each service's own pipeline: build + test
-  with Bazel, then staging and production (`kind: deploy`), which deploy
+  with Bazel, then staging and production (`job_type: deploy`), which deploy
   only a jar that is new to them, or a changed deploy script
   (`checkout: [deploy]`).
 - `tools/affected.sh <base> [<head>]` — the services a diff affects

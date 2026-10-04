@@ -4,12 +4,16 @@
 # service (orders, payments, …) with SERVICE set; each copy has its own
 # history, board and URL, and receives only the revisions the Bazel
 # graph says change that service.
-stages: [build, staging, production]
+type: pipeline
+stages:
+  - build
+  - staging
+  - production
 jobs:
   # A build checks out the whole tree: Bazel reads MODULE.bazel, .bazelrc,
   # tools/ and every package the service depends on.
   build:
-    kind: build
+    job_type: build
     stage: build
     timeout_seconds: 1200
     # The CI image the dispatch pipeline built (gcc, Bazel, bazel-diff);
@@ -19,9 +23,12 @@ jobs:
     # External repositories: downloaded once per MODULE.bazel.lock.
     cache:
       key: bazel-repo-${checksum:MODULE.bazel.lock}
-      restore_keys: [bazel-repo-]
-      paths: [.cache/bazel-repo]
-    secrets: [BUILDBUDDY_API_KEY]
+      restore_keys:
+        - bazel-repo-
+      paths:
+        - .cache/bazel-repo
+    secrets:
+      - BUILDBUDDY_API_KEY
     setup:
       - uses: bazel/remote-cache@1
     script: |
@@ -29,22 +36,28 @@ jobs:
       tools/bazelw build //services/$SERVICE:server_deploy.jar
       mkdir -p dist && cp bazel-bin/services/$SERVICE/server_deploy.jar dist/$SERVICE.jar
     produces:
-      jar: { path: "dist/*.jar" }
+      jar:
+        path: "dist/*.jar"
   # Bazel builds the jar byte for byte: a change that leaves this service's
   # jar identical (a README, a comment, a sibling's code) builds and stops
   # here — the deploys check out only deploy/ and run when the jar they
   # ship is new to them, or when the deploy script changed since they
   # last ran.
   deploy_staging:
-    kind: deploy
+    job_type: deploy
     stage: staging
-    consumes: [build/jar]
-    checkout: [deploy]
+    consumes:
+      - build/jar
+    checkout:
+      - deploy
     script: deploy/deploy.sh $SERVICE staging
   deploy_prod:
-    kind: deploy
+    job_type: deploy
     stage: production
-    needs: [deploy_staging]
-    consumes: [build/jar]
-    checkout: [deploy]
+    needs:
+      - deploy_staging
+    consumes:
+      - build/jar
+    checkout:
+      - deploy
     script: deploy/deploy.sh $SERVICE production
