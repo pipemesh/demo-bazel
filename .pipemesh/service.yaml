@@ -45,6 +45,7 @@ jobs:
   # last ran.
   deploy_staging:
     job_type: deploy
+    production: false
     stage: staging
     consumes:
       - build/jar
@@ -53,6 +54,7 @@ jobs:
     script: deploy/deploy.sh $SERVICE staging
   deploy_prod:
     job_type: deploy
+    production: true
     stage: production
     needs:
       - deploy_staging
