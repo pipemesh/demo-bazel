@@ -1,23 +1,28 @@
 # Pull request checks: test only what the change can affect, computed
 # per run from the Bazel graph against the merge base.
-stages: [image, test]
+type: workflow
+stages:
+  - image
+  - test
 jobs:
   # The CI image: ci/ is its whole build context, so it is exactly
   # what is in that directory. An image already built from the same
   # content (this job and ci/) is reused, the default branch's first.
   build_ci:
-    kind: build
+    job_type: build
     stage: image
-    checkout: [ci]
+    checkout:
+      - ci
     script: echo "ci/ changed - building the CI image"
     publish:
-      - { context: ci, key: ci_image }
+      - context: ci
+        key: ci_image
 
   # A task: what it tests depends on the merge base, not only on the
   # tree, so it runs on every pull request revision. It checks out the
   # whole tree: the Bazel graph spans it.
   affected_tests:
-    kind: task
+    job_type: task
     stage: test
     checkout: true
     # The CI image: a pull request that changes ci/ builds and tests its
@@ -26,8 +31,10 @@ jobs:
     # External repositories: downloaded once per MODULE.bazel.lock.
     cache:
       key: bazel-repo-${checksum:MODULE.bazel.lock}
-      restore_keys: [bazel-repo-]
-      paths: [.cache/bazel-repo]
+      restore_keys:
+        - bazel-repo-
+      paths:
+        - .cache/bazel-repo
     script: |
       base=$(git merge-base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" HEAD)
       services=$(tools/affected.sh "$base" HEAD)
