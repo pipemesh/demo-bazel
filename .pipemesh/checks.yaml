@@ -6,15 +6,20 @@ jobs:
   # what is in that directory. An image already built from the same
   # content (this job and ci/) is reused, the default branch's first.
   build_ci:
+    kind: build
     stage: image
-    paths: [ci]
-    skip: built
+    checkout: [ci]
     script: echo "ci/ changed - building the CI image"
     publish:
       - { context: ci, key: ci_image }
 
+  # A task: what it tests depends on the merge base, not only on the
+  # tree, so it runs on every pull request revision. It checks out the
+  # whole tree: the Bazel graph spans it.
   affected_tests:
+    kind: task
     stage: test
+    checkout: true
     # The CI image: a pull request that changes ci/ builds and tests its
     # own; otherwise it runs in the default branch's.
     image_from: build_ci/ci_image
