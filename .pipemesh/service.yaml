@@ -48,7 +48,7 @@ jobs:
     production: false
     stage: staging
     consumes:
-      - build/jar
+      JAR: build/jar
     checkout:
       - deploy
     script: deploy/deploy.sh $SERVICE staging
@@ -59,7 +59,7 @@ jobs:
     needs:
       - deploy_staging
     consumes:
-      - build/jar
+      JAR: build/jar
     checkout:
       - deploy
     script: deploy/deploy.sh $SERVICE production
