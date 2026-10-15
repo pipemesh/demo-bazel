@@ -30,9 +30,9 @@ dispatch:
       checkout:
         - ci
       script: echo "ci/ changed - building the CI image"
-      publish:
-        - context: ci
-          key: ci_image
+      produces:
+        ci_image:
+          build: ci
 
     # A build that checks out the whole tree: bazel-diff hashes every
     # target, so it reads MODULE.bazel, .bazelrc, tools/ and every package.
