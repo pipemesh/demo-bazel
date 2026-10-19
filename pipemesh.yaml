@@ -60,46 +60,51 @@ dispatch:
         notifications: fingerprints/notifications
         catalog: fingerprints/catalog
 
-    # One child pipeline per service. A job_type: pipeline job checks out
-    # nothing, so the entry it consumes is its only input: it hands the
-    # revision over only when that entry changed.
+    # One child pipeline per service. The service body is shared, so each
+    # job watches only its own service's fingerprint: it hands the revision
+    # over only when that artifact changed.
     orders:
       job_type: pipeline
       stage: dispatch
-      consumes:
-        FINGERPRINT: graph/orders
+      fingerprint:
+        artifacts: [graph/orders]
+        checkout: false
       body: !ref service
       variables:
         SERVICE: orders
     payments:
       job_type: pipeline
       stage: dispatch
-      consumes:
-        FINGERPRINT: graph/payments
+      fingerprint:
+        artifacts: [graph/payments]
+        checkout: false
       body: !ref service
       variables:
         SERVICE: payments
     inventory:
       job_type: pipeline
       stage: dispatch
-      consumes:
-        FINGERPRINT: graph/inventory
+      fingerprint:
+        artifacts: [graph/inventory]
+        checkout: false
       body: !ref service
       variables:
         SERVICE: inventory
     notifications:
       job_type: pipeline
       stage: dispatch
-      consumes:
-        FINGERPRINT: graph/notifications
+      fingerprint:
+        artifacts: [graph/notifications]
+        checkout: false
       body: !ref service
       variables:
         SERVICE: notifications
     catalog:
       job_type: pipeline
       stage: dispatch
-      consumes:
-        FINGERPRINT: graph/catalog
+      fingerprint:
+        artifacts: [graph/catalog]
+        checkout: false
       body: !ref service
       variables:
         SERVICE: catalog
