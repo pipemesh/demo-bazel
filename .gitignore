@@ -1,3 +1,4 @@
 bazel-*
+reports/
 .bazel-cache/
 .cache/

@@ -20,6 +20,10 @@ libs/http    ─┴─ every service
   with Bazel, then staging and production (`job_type: deploy`), which deploy
   only a jar that is new to them, or a changed deploy script
   (`checkout: [deploy]`).
+- **Reports:** each service's build writes its Bazel test results as a
+  Markdown report (`tools/test-report.py`, `reports:` in
+  `.pipemesh/service.yaml`), shown in the job panel's Reports tab, passing
+  or failing.
 - `tools/affected.sh <base> [<head>]` — the services a diff affects
   (`rdeps` of the touched packages); pull request checks test only those.
 
