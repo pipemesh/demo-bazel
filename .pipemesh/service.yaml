@@ -31,13 +31,25 @@ jobs:
       - BUILDBUDDY_API_KEY
     setup:
       - uses: bazel/remote-cache@1
+    # The test report is written whether the tests pass or not: a failing
+    # run is when it matters most.
     script: |
-      tools/bazelw test //services/$SERVICE/...
+      rc=0
+      tools/bazelw test //services/$SERVICE/... || rc=$?
+      mkdir -p reports && tools/test-report.py "$SERVICE" > reports/tests.md
+      [ "$rc" -eq 0 ] || exit "$rc"
       tools/bazelw build //services/$SERVICE:server_deploy.jar
       mkdir -p dist && cp bazel-bin/services/$SERVICE/server_deploy.jar dist/$SERVICE.jar
     produces:
       jar:
         path: "dist/*.jar"
+    # The Reports tab: Bazel's results for the service's test targets (a
+    # cached result included), and each one's log. A report is for people:
+    # no job consumes it and it is in no fingerprint.
+    reports:
+      tests:
+        path: reports/tests.md
+        title: Tests
   # Bazel builds the jar byte for byte: a change that leaves this service's
   # jar identical (a README, a comment, a sibling's code) builds and stops
   # here — the deploys check out only deploy/ and run when the jar they
@@ -49,6 +61,8 @@ jobs:
     stage: staging
     consumes:
       JAR: build/jar
+    # The CI image: the smoke test runs the jar on its JRE.
+    image_from: ../build_ci/ci_image
     checkout:
       - deploy
     script: deploy/deploy.sh $SERVICE staging
@@ -60,6 +74,8 @@ jobs:
       - deploy_staging
     consumes:
       JAR: build/jar
+    # The CI image: the smoke test runs the jar on its JRE.
+    image_from: ../build_ci/ci_image
     checkout:
       - deploy
     script: deploy/deploy.sh $SERVICE production

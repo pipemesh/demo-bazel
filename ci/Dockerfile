@@ -1,5 +1,6 @@
 # The image demo-bazel's CI builds in: a C++ toolchain (Bazel's Java
-# launcher needs one), bazelisk, bazel-diff, and the Bazel release named by
+# launcher needs one), bazelisk, bazel-diff, a Java runtime for the deploys'
+# smoke test, and the Bazel release named by
 # ci/.bazelversion, installed and extracted. Tools only: this directory is
 # the whole build context, so the image is exactly what is in it, and
 # PipeMesh rebuilds it when (and only when) something here changes
@@ -37,6 +38,11 @@ RUN set -eu; \
     chmod +x /usr/local/bin/bazel-diff
 
 ENV BAZELISK_HOME=/opt/bazelisk BAZEL_DIFF=/usr/local/bin/bazel-diff
+
+# A Java 25 runtime for the deploys' smoke test (deploy/deploy.sh runs the
+# service's jar). Bazel builds with its own remote JDK and ignores it.
+COPY --from=eclipse-temurin:25-jre@sha256:dbb43d81099eec91e0800226ed2296d03146ee7857165b95112372ad0d67e87f /opt/java/openjdk /opt/java/openjdk
+ENV JAVA_HOME=/opt/java/openjdk PATH=/opt/java/openjdk/bin:$PATH
 
 # Every bazel command starts from Bazel's installation, already extracted.
 # External repositories are not in the image: they download into the

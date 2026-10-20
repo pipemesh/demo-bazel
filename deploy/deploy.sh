@@ -8,6 +8,9 @@ jar=dist/$svc.jar
 echo "deploying $svc to $env: $( (sha256sum "$jar" 2>/dev/null || shasum -a 256 "$jar") | cut -c1-12)"
 PORT=18080 java -jar "$jar" & pid=$!
 trap 'kill $pid 2>/dev/null' EXIT
-for _ in $(seq 1 50); do curl -fsS localhost:18080 && break; sleep 0.2; done
-echo
-echo "$svc is live in $env"
+for _ in $(seq 1 50); do
+  if curl -fsS localhost:18080; then echo; echo "$svc is live in $env"; exit 0; fi
+  sleep 0.2
+done
+echo "$svc did not answer on :18080 within 10 s" >&2
+exit 1

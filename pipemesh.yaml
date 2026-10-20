@@ -40,7 +40,8 @@ dispatch:
       job_type: build
       stage: graph
       # Every fingerprint also covers the Bazel release and flags, the
-      # service pipeline's config and the deploy scripts.
+      # service pipeline's config, its test report script and the deploy
+      # scripts.
       uses: bazel/fingerprint@1
       image_from: build_ci/ci_image
       # External repositories: downloaded once per MODULE.bazel.lock.
@@ -52,7 +53,7 @@ dispatch:
           - .cache/bazel-repo
       with:
         bazel: tools/bazelw
-        extra: .bazelversion .bazelrc .pipemesh/service.yaml deploy
+        extra: .bazelversion .bazelrc .pipemesh/service.yaml tools/test-report.py deploy
       produces:
         orders: fingerprints/orders
         payments: fingerprints/payments
