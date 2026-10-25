@@ -18,11 +18,11 @@ jobs:
       ci_image:
         build: ci
 
-  # A task: what it tests depends on the merge base, not only on the
-  # tree, so it runs on every pull request revision. It checks out the
-  # whole tree: the Bazel graph spans it.
+  # A build over the whole tree (the Bazel graph spans it): a revision
+  # with the same tree as an earlier pass reuses it. What it tests is
+  # chosen against the merge base.
   affected_tests:
-    job_type: task
+    job_type: build
     stage: test
     checkout: true
     # The CI image: a pull request that changes ci/ builds and tests its
