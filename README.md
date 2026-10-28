@@ -24,8 +24,9 @@ libs/http    ─┴─ every service
   Markdown report (`tools/test-report.py`, `reports:` in
   `.pipemesh/service.yaml`), shown in the job panel's Reports tab, passing
   or failing.
-- `tools/affected.sh <base> [<head>]` — the services a diff affects
-  (`rdeps` of the touched packages); pull request checks test only those.
+- `.pipemesh/checks.yaml` — pull requests test every service
+  (`bazel test //services/...`), without the remote cache: proposed code
+  never gets a key that could write to it.
 
 Try it: change `libs/money` and only orders, payments and catalog
 receive the revision; change a README or a `MODULE.bazel` comment and

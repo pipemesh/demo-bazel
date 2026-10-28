@@ -6,7 +6,7 @@ java_library(
     deps = ["//libs/events", "//libs/http", "//libs/money"],
 )
 
-# The deployable. `tools/affected.sh` finds every target tagged
+# The deployable. The dispatch pipeline fingerprints every target tagged
 # "deployable"; the service pipeline ships :server_deploy.jar.
 java_binary(
     name = "server",

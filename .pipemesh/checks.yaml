@@ -1,5 +1,5 @@
-# Pull request checks: test only what the change can affect, computed
-# per run from the Bazel graph against the merge base.
+# Pull request checks: test every service. No merge base is needed, and
+# the checkout stays one commit deep.
 type: workflow
 stages:
   - image
@@ -19,8 +19,9 @@ jobs:
         build: ci
 
   # A build over the whole tree (the Bazel graph spans it): a revision
-  # with the same tree as an earlier pass reuses it. What it tests is
-  # chosen against the merge base.
+  # with the same tree as an earlier pass reuses it. No remote cache: the
+  # BuildBuddy key would let proposed code write what the default branch's
+  # builds read.
   affected_tests:
     job_type: build
     stage: test
@@ -36,8 +37,4 @@ jobs:
       paths:
         - .cache/bazel-repo
     script: |
-      base=$(git merge-base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" HEAD)
-      services=$(tools/affected.sh "$base" HEAD)
-      if [ -z "$services" ]; then echo "no service affected"; exit 0; fi
-      echo "affected: $services"
-      tools/bazelw test $(printf '//services/%s/... ' $services)
+      tools/bazelw test //services/...
