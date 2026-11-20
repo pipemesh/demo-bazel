@@ -16,6 +16,7 @@ jobs:
     script: echo "ci/ changed - building the CI image"
     produces:
       ci_image:
+        type: oci
         build: ci
 
   # A build over the whole tree (the Bazel graph spans it): a revision
