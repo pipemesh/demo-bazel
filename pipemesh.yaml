@@ -44,7 +44,8 @@ dispatch:
       # service pipeline's config, its test report script and the deploy
       # scripts.
       uses: bazel/fingerprint@1
-      image_from: build_ci/ci_image
+      consumes:
+        BUILD_IMAGE: build_ci/ci_image
       # External repositories: downloaded once per MODULE.bazel.lock.
       cache:
         key: bazel-repo-${checksum:MODULE.bazel.lock}
@@ -53,6 +54,7 @@ dispatch:
         paths:
           - .cache/bazel-repo
       with:
+        image: !env BUILD_IMAGE
         bazel: tools/bazelw
         extra: .bazelversion .bazelrc .pipemesh/service.yaml tools/test-report.py deploy
       produces:
@@ -72,7 +74,7 @@ dispatch:
         artifacts: [graph/orders]
         checkout: false
       body: !ref service
-      variables:
+      env:
         SERVICE: orders
     payments:
       job_type: pipeline
@@ -81,7 +83,7 @@ dispatch:
         artifacts: [graph/payments]
         checkout: false
       body: !ref service
-      variables:
+      env:
         SERVICE: payments
     inventory:
       job_type: pipeline
@@ -90,7 +92,7 @@ dispatch:
         artifacts: [graph/inventory]
         checkout: false
       body: !ref service
-      variables:
+      env:
         SERVICE: inventory
     notifications:
       job_type: pipeline
@@ -99,7 +101,7 @@ dispatch:
         artifacts: [graph/notifications]
         checkout: false
       body: !ref service
-      variables:
+      env:
         SERVICE: notifications
     catalog:
       job_type: pipeline
@@ -108,7 +110,7 @@ dispatch:
         artifacts: [graph/catalog]
         checkout: false
       body: !ref service
-      variables:
+      env:
         SERVICE: catalog
 
 pipemesh:
