@@ -29,7 +29,9 @@ jobs:
     checkout: true
     # The CI image: a pull request that changes ci/ builds and tests its
     # own; otherwise it runs in the default branch's.
-    image_from: build_ci/ci_image
+    consumes:
+      BUILD_IMAGE: build_ci/ci_image
+    image: !env BUILD_IMAGE
     # External repositories: downloaded once per MODULE.bazel.lock.
     cache:
       key: bazel-repo-${checksum:MODULE.bazel.lock}

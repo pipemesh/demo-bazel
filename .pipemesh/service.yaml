@@ -1,5 +1,5 @@
 # See README.md for how revisions reach this pipeline and what it ships
-# (it runs in the CI image the dispatch pipeline builds: image_from).
+# (it runs in the CI image the dispatch pipeline builds: image: !env BUILD_IMAGE).
 # One service's pipeline. The dispatch pipeline registers it once per
 # service (orders, payments, …) with SERVICE set; each copy has its own
 # history, board and URL, and receives only the revisions the Bazel
@@ -19,7 +19,9 @@ jobs:
     # The CI image the dispatch pipeline built (gcc, Bazel, bazel-diff);
     # build steps come from a shared remote cache (BuildBuddy), so a step
     # any service already ran is fetched, not rebuilt.
-    image_from: ../build_ci/ci_image
+    consumes:
+      BUILD_IMAGE: ../build_ci/ci_image
+    image: !env BUILD_IMAGE
     # External repositories: downloaded once per MODULE.bazel.lock.
     cache:
       key: bazel-repo-${checksum:MODULE.bazel.lock}
@@ -60,9 +62,10 @@ jobs:
     production: false
     stage: staging
     consumes:
+      BUILD_IMAGE: ../build_ci/ci_image
       JAR: build/jar
     # The CI image: the smoke test runs the jar on its JRE.
-    image_from: ../build_ci/ci_image
+    image: !env BUILD_IMAGE
     checkout:
       - deploy
     script: deploy/deploy.sh $SERVICE staging
@@ -73,9 +76,10 @@ jobs:
     needs:
       - deploy_staging
     consumes:
+      BUILD_IMAGE: ../build_ci/ci_image
       JAR: build/jar
     # The CI image: the smoke test runs the jar on its JRE.
-    image_from: ../build_ci/ci_image
+    image: !env BUILD_IMAGE
     checkout:
       - deploy
     script: deploy/deploy.sh $SERVICE production
